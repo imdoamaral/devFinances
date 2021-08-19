@@ -17,8 +17,19 @@ const Modal = {
     }
 }
 
+const Storage = {
+    get() {
+        return JSON.parse(localStorage.getItem("dev.finances:transactions")) || []
+    },
+
+    set(transactions) {
+        localStorage.setItem("dev.finances:transactions", JSON.stringify(transactions))
+    }
+}
+
 const Transaction = {
-    all: transactions = [
+    all: Storage.get(),
+    /* transactions = [
         {
             description: 'Luz',
             amount: -50000, // -500,00 (posteriormente dividir por 100)
@@ -34,7 +45,7 @@ const Transaction = {
             amount: 20000, // 200,00
             date: '15/08/2021',
         },
-    ],
+    ], */
 
     add(transaction) {
         Transaction.all.push(transaction)
@@ -89,15 +100,17 @@ const Transaction = {
 const DOM = {
     transactionsContainer: document.querySelector('#data-table tbody'),
 
-    addTransaction(transactions, index) {
+    addTransaction(transaction, index) {
         const tr = document.createElement('tr')
-        tr.innerHTML = DOM.innerHTMLTransaction(transactions)
+        tr.innerHTML = DOM.innerHTMLTransaction(transaction, index)
+
+        tr.dataset.index = index
 
         DOM.transactionsContainer.appendChild(tr)
     },
     
     // funcao que vai criar o HTML
-    innerHTMLTransaction(transaction) {
+    innerHTMLTransaction(transaction, index) {
         const cssClass = transaction.amount > 0 ? "income" : "expense"
         
         const amount = Utils.formatCurrency(transaction.amount)
@@ -108,7 +121,7 @@ const DOM = {
             <td class="${cssClass}">${amount}</td>
             <td class="date">${transaction.date}</td>
             <td>
-                <img src="./assets/minus.svg" alt="Remover transação">
+                <img onclick="Transaction.remove(${index})" src="./assets/minus.svg" alt="Remover transação">
             </td>
         </tr>
         `
@@ -207,8 +220,8 @@ const Form = {
 
     clearFields() {
         Form.description.value = ""
-        Form.description.amount = ""
-        Form.description.date = ""
+        Form.amount.value = ""
+        Form.date.value = ""
     },
     
     submit(event) {
@@ -243,11 +256,15 @@ const App = {
         // DOM.addTransaction(transactions[1])
         // DOM.addTransaction(transactions[2])
         
-        transactions.forEach(function(transaction) {
-            DOM.addTransaction(transaction)
-        })
+        // Transaction.all.forEach(function(transaction,index) {
+        //     DOM.addTransaction(transaction, index)
+        // })
+
+        Transaction.all.forEach(DOM.addTransaction)
         
         DOM.updateBalance()
+
+        Storage.set(Transaction.all)
     },
     reload() {
         DOM.clearTransaction()
